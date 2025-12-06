@@ -1,0 +1,34 @@
+# Virtual environment (uv defaults to .venv)
+.venv/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated files
+# uv puts a .gitignore inside the dist folder but ignoring the top level is fine
+build/
+dist/
+wheels/
+*.egg-info
+
+# uv lock file (for application projects, typically committed, but ignored for libraries)
+# If you choose NOT to commit your lock file, add:
+# uv.lock
+
+# Sensitive files (environment variables, secrets)
+.env
+.secrets
+test_db.db
+
+# Editors and IDEs
+.vscode/        # VS Code settings folder
+.idea/          # PyCharm/IntelliJ
+*.swp           # Vim
+
+# Caching and System files
+.ruff_cache/    # Cache for the Ruff linter/formatter
+.DS_Store       # macOS
+Thumbs.db       # Windows
