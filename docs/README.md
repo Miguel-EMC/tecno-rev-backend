@@ -69,7 +69,23 @@ This documentation provides a comprehensive guide to building a scalable RESTful
    - Module-specific validations
    - Complete examples for all modules
 
-11. [Best Practices](./11-best-practices.md) *(Coming soon)*
+11. [Roles Setup & Permissions](./11-roles-setup.md)
+   - User roles overview (SUPER_ADMIN, BRANCH_MANAGER, SALES_AGENT, LOGISTICS, CUSTOMER)
+   - Role descriptions and capabilities
+   - Initial setup and seeding roles
+   - Role assignment during registration
+   - Role-based access control (RBAC)
+   - Common scenarios and troubleshooting
+
+12. [JWT Tokens - How Authentication Works](./12-jwt-tokens.md)
+   - JWT overview and structure
+   - Token generation and verification
+   - Token storage (localStorage, cookies, etc.)
+   - Security best practices
+   - Common issues and solutions
+   - Future enhancements (refresh tokens, blacklist)
+
+13. [Best Practices](./13-best-practices.md) *(Coming soon)*
    - Error handling
    - Logging
    - Testing

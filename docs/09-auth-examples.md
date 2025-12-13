@@ -58,11 +58,11 @@ print("STEP 2: Login to get access token")
 print("=" * 50)
 
 login_data = {
-    "username": "alice@example.com",  # OAuth2 uses 'username' field
+    "email": "alice@example.com",
     "password": "securepass123"
 }
 
-response = requests.post(f"{BASE_URL}/api/auth/token", data=login_data)
+response = requests.post(f"{BASE_URL}/api/auth/token", json=login_data)
 
 if response.status_code == 200:
     token_data = response.json()
@@ -231,8 +231,8 @@ curl -X POST "http://localhost:8000/api/auth/register" \
 ```bash
 # Login and extract token
 TOKEN=$(curl -s -X POST "http://localhost:8000/api/auth/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=bob@example.com&password=password123" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"bob@example.com","password":"password123"}' \
   | jq -r '.access_token')
 
 echo "Token: $TOKEN"
@@ -315,16 +315,15 @@ async function registerUser() {
 // 2. Login
 // ========================================
 async function login(email, password) {
-  const formData = new URLSearchParams();
-  formData.append('username', email);  // OAuth2 uses 'username'
-  formData.append('password', password);
-
   const response = await fetch(`${BASE_URL}/api/auth/token`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Content-Type': 'application/json'
     },
-    body: formData
+    body: JSON.stringify({
+      email: email,
+      password: password
+    })
   });
 
   if (response.ok) {
@@ -485,14 +484,9 @@ export const authService = {
   },
 
   async login(email, password) {
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
-
-    const response = await API.post('/api/auth/token', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+    const response = await API.post('/api/auth/token', {
+      email: email,
+      password: password
     });
 
     const { access_token } = response.data;
@@ -621,7 +615,7 @@ def login(email, password):
     try:
         response = requests.post(
             f"{BASE_URL}/api/auth/token",
-            data={"username": email, "password": password}
+            json={"email": email, "password": password}
         )
         response.raise_for_status()
 
@@ -698,7 +692,7 @@ class APIClient:
         """Login and store credentials"""
         response = requests.post(
             f"{self.base_url}/api/auth/token",
-            data={"username": email, "password": password}
+            json={"email": email, "password": password}
         )
 
         if response.status_code == 200:

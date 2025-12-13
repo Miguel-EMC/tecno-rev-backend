@@ -12,8 +12,8 @@ class AuditMixin(SQLModel):
     """Mixin for common audit fields"""
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
-    created_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    updated_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    created_by_id: Optional[int] = None
+    updated_by_id: Optional[int] = None
     is_deleted: bool = Field(default=False, index=True)
     deleted_at: Optional[datetime] = None
-    deleted_by_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    deleted_by_id: Optional[int] = None

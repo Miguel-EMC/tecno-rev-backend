@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from sqlmodel import Session, select
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -11,9 +11,6 @@ from app.core.database import get_session
 from .models import User
 from .schema import RegisterRequest, CreateUser, UpdateUser
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # OAuth2 scheme - tokenUrl must match the login endpoint
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
@@ -21,12 +18,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 # Password utilities
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    password_bytes = plain_password.encode('utf-8')[:72]
+    return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return pwd_context.hash(password)
+    """Hash a password (bcrypt max 72 bytes)"""
+    password_bytes = password.encode('utf-8')[:72]
+    hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+    return hashed.decode('utf-8')
 
 
 # JWT token utilities
@@ -47,7 +47,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 # User authentication
 def authenticate_user(session: Session, email: str, password: str) -> Optional[User]:
     """Authenticate a user by email and password"""
-    statement = select(User).where(User.email == email, not User.is_deleted)
+    statement = select(User).where(User.email == email, User.is_deleted == False)
     user = session.exec(statement).first()
 
     if not user:
@@ -62,13 +62,13 @@ def authenticate_user(session: Session, email: str, password: str) -> Optional[U
 # User CRUD operations
 def get_user_by_email(session: Session, email: str) -> Optional[User]:
     """Get a user by email"""
-    statement = select(User).where(User.email == email, not User.is_deleted)
+    statement = select(User).where(User.email == email, User.is_deleted == False)
     return session.exec(statement).first()
 
 
 def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
     """Get a user by ID"""
-    statement = select(User).where(User.id == user_id, not User.is_deleted)
+    statement = select(User).where(User.id == user_id, User.is_deleted == False)
     return session.exec(statement).first()
 
 
