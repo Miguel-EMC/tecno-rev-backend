@@ -32,18 +32,42 @@ This documentation provides a comprehensive guide to building a scalable RESTful
    - Running migrations
    - Common issues and solutions
 
-6. [API Endpoints](./06-api-endpoints.md) *(Coming soon)*
+6. [Authentication Schemas](./06-auth-schemas.md)
+   - Creating request/response schemas
+   - Pydantic validation
+   - Email validation with EmailStr
+   - Password and field constraints
+   - Testing schemas
+
+7. [Authentication Services](./07-auth-services.md)
+   - Password hashing with bcrypt
+   - JWT token creation and validation
+   - User authentication
+   - CRUD operations
+   - Current user dependencies
+
+8. [Authentication Routes](./08-auth-routes.md)
+   - Creating API endpoints
+   - OAuth2 password flow
+   - Register, login, profile endpoints
+   - Dependency injection
+   - Testing with FastAPI docs
+
+9. [Authentication Examples](./09-auth-examples.md)
+   - Complete Python examples
+   - cURL commands
+   - JavaScript/Fetch API
+   - React/Axios integration
+   - Error handling
+   - Token expiration handling
+
+10. [API Endpoints](./10-api-endpoints.md) *(Coming soon)*
    - Router setup
    - CRUD operations
    - Request/Response schemas
    - Validation
 
-7. [Authentication & Authorization](./07-authentication.md) *(Coming soon)*
-   - JWT tokens
-   - Password hashing
-   - Role-based access control
-
-8. [Best Practices](./08-best-practices.md) *(Coming soon)*
+11. [Best Practices](./11-best-practices.md) *(Coming soon)*
    - Error handling
    - Logging
    - Testing
