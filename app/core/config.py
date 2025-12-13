@@ -13,7 +13,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", ""
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 
     # Application
     APP_NAME: str = "Tecno Rev API"

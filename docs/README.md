@@ -61,11 +61,13 @@ This documentation provides a comprehensive guide to building a scalable RESTful
    - Error handling
    - Token expiration handling
 
-10. [API Endpoints](./10-api-endpoints.md) *(Coming soon)*
-   - Router setup
-   - CRUD operations
-   - Request/Response schemas
-   - Validation
+10. [CRUD Pattern with Protected Routes](./10-crud-pattern.md)
+   - Standard CRUD operations
+   - Schema-Service-Router pattern
+   - Protected vs public routes
+   - Route authentication
+   - Module-specific validations
+   - Complete examples for all modules
 
 11. [Best Practices](./11-best-practices.md) *(Coming soon)*
    - Error handling
