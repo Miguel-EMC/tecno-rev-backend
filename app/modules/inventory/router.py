@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlmodel import Session
 
 from app.core.database import get_session
-from app.modules.auth.service import get_current_active_user
+from app.core.permissions import require_admin, require_manager
 from app.modules.auth.models import User
 from .schema import (
     BranchCreate,
@@ -68,9 +68,9 @@ def get_branch(
 def create_new_branch(
     branch_data: BranchCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin)
 ):
-    """Create a new branch (protected)"""
+    """Create a new branch (SUPER_ADMIN only)"""
     return create_branch(session, branch_data)
 
 
@@ -79,9 +79,9 @@ def update_existing_branch(
     branch_id: int,
     branch_data: BranchUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin)
 ):
-    """Update a branch (protected)"""
+    """Update a branch (SUPER_ADMIN only)"""
     return update_branch(session, branch_id, branch_data)
 
 
@@ -89,9 +89,9 @@ def update_existing_branch(
 def delete_existing_branch(
     branch_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin)
 ):
-    """Delete a branch (protected)"""
+    """Delete a branch (SUPER_ADMIN only)"""
     return delete_branch(session, branch_id)
 
 
@@ -104,9 +104,9 @@ def list_stock_entries(
     branch_id: Optional[int] = Query(default=None),
     product_id: Optional[int] = Query(default=None),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Get stock entries with optional filters (protected)"""
+    """Get stock entries with optional filters (SUPER_ADMIN or BRANCH_MANAGER)"""
     return get_stock_entries(session, branch_id, product_id)
 
 
@@ -115,9 +115,9 @@ def get_stock(
     branch_id: int,
     product_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Get stock entry for specific branch and product (protected)"""
+    """Get stock entry for specific branch and product (SUPER_ADMIN or BRANCH_MANAGER)"""
     stock = get_stock_entry(session, branch_id, product_id)
     if not stock:
         from fastapi import HTTPException
@@ -129,9 +129,9 @@ def get_stock(
 def create_new_stock_entry(
     stock_data: StockEntryCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Create a new stock entry (protected)"""
+    """Create a new stock entry (SUPER_ADMIN or BRANCH_MANAGER)"""
     return create_stock_entry(session, stock_data)
 
 
@@ -141,9 +141,9 @@ def update_existing_stock_entry(
     product_id: int,
     stock_data: StockEntryUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Update a stock entry (protected)"""
+    """Update a stock entry (SUPER_ADMIN or BRANCH_MANAGER)"""
     return update_stock_entry(session, branch_id, product_id, stock_data)
 
 
@@ -152,9 +152,9 @@ def delete_existing_stock_entry(
     branch_id: int,
     product_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Delete a stock entry (protected)"""
+    """Delete a stock entry (SUPER_ADMIN or BRANCH_MANAGER)"""
     return delete_stock_entry(session, branch_id, product_id)
 
 
@@ -169,9 +169,9 @@ def list_inventory_movements(
     branch_id: Optional[int] = Query(default=None),
     product_id: Optional[int] = Query(default=None),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Get inventory movements with optional filters (protected)"""
+    """Get inventory movements with optional filters (SUPER_ADMIN or BRANCH_MANAGER)"""
     return get_inventory_movements(session, skip, limit, branch_id, product_id)
 
 
@@ -179,9 +179,9 @@ def list_inventory_movements(
 def get_movement(
     movement_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Get a specific inventory movement by ID (protected)"""
+    """Get a specific inventory movement by ID (SUPER_ADMIN or BRANCH_MANAGER)"""
     movement = get_inventory_movement_by_id(session, movement_id)
     if not movement:
         from fastapi import HTTPException
@@ -193,9 +193,9 @@ def get_movement(
 def create_new_inventory_movement(
     movement_data: InventoryMovementCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Create a new inventory movement (protected)"""
+    """Create a new inventory movement (SUPER_ADMIN or BRANCH_MANAGER)"""
     return create_inventory_movement(session, movement_data)
 
 
@@ -204,9 +204,9 @@ def update_existing_inventory_movement(
     movement_id: int,
     movement_data: InventoryMovementUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Update an inventory movement (protected)"""
+    """Update an inventory movement (SUPER_ADMIN or BRANCH_MANAGER)"""
     return update_inventory_movement(session, movement_id, movement_data)
 
 
@@ -214,7 +214,7 @@ def update_existing_inventory_movement(
 def delete_existing_inventory_movement(
     movement_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Delete an inventory movement (protected)"""
+    """Delete an inventory movement (SUPER_ADMIN or BRANCH_MANAGER)"""
     return delete_inventory_movement(session, movement_id)

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlmodel import Session
 
 from app.core.database import get_session
-from app.modules.auth.service import get_current_active_user
+from app.core.permissions import require_manager
 from app.modules.auth.models import User
 from .schema import (
     CategoryCreate,
@@ -68,9 +68,9 @@ def get_category(
 def create_new_category(
     category_data: CategoryCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Create a new category (protected - requires authentication)"""
+    """Create a new category (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return create_category(session, category_data)
 
 
@@ -79,9 +79,9 @@ def update_existing_category(
     category_id: int,
     category_data: CategoryUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Update a category (protected - requires authentication)"""
+    """Update a category (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return update_category(session, category_id, category_data)
 
 
@@ -89,9 +89,9 @@ def update_existing_category(
 def delete_existing_category(
     category_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Delete a category (protected - requires authentication)"""
+    """Delete a category (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return delete_category(session, category_id)
 
 
@@ -127,9 +127,9 @@ def get_product(
 def create_new_product(
     product_data: ProductCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Create a new product (protected - requires authentication)"""
+    """Create a new product (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return create_product(session, product_data)
 
 
@@ -138,9 +138,9 @@ def update_existing_product(
     product_id: int,
     product_data: ProductUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Update a product (protected - requires authentication)"""
+    """Update a product (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return update_product(session, product_id, product_data)
 
 
@@ -148,9 +148,9 @@ def update_existing_product(
 def delete_existing_product(
     product_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Delete a product (protected - requires authentication)"""
+    """Delete a product (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return delete_product(session, product_id)
 
 
@@ -184,9 +184,9 @@ def get_image(
 def create_new_product_image(
     image_data: ProductImageCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Create a new product image (protected - requires authentication)"""
+    """Create a new product image (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return create_product_image(session, image_data)
 
 
@@ -195,9 +195,9 @@ def update_existing_product_image(
     image_id: int,
     image_data: ProductImageUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Update a product image (protected - requires authentication)"""
+    """Update a product image (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return update_product_image(session, image_id, image_data)
 
 
@@ -205,7 +205,7 @@ def update_existing_product_image(
 def delete_existing_product_image(
     image_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager)
 ):
-    """Delete a product image (protected - requires authentication)"""
+    """Delete a product image (SUPER_ADMIN or BRANCH_MANAGER only)"""
     return delete_product_image(session, image_id)

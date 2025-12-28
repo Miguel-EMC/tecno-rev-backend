@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlmodel import Session
 
 from app.core.database import get_session
-from app.modules.auth.service import get_current_active_user
+from app.core.permissions import require_logistics
 from app.modules.auth.models import User
 from .schema import ShipmentCreate, ShipmentUpdate, ShipmentResponse
 from .service import (
@@ -28,9 +28,9 @@ def list_shipments(
     limit: int = Query(default=100, ge=1, le=100),
     order_id: Optional[int] = Query(default=None),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_logistics)
 ):
-    """Get all shipments with optional order filter (protected)"""
+    """Get all shipments with optional order filter (SUPER_ADMIN or LOGISTICS)"""
     return get_shipments(session, skip, limit, order_id)
 
 
@@ -38,9 +38,9 @@ def list_shipments(
 def get_shipment(
     shipment_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_logistics)
 ):
-    """Get a specific shipment by ID (protected)"""
+    """Get a specific shipment by ID (SUPER_ADMIN or LOGISTICS)"""
     shipment = get_shipment_by_id(session, shipment_id)
     if not shipment:
         from fastapi import HTTPException
@@ -65,9 +65,9 @@ def get_shipment_by_tracking(
 def create_new_shipment(
     shipment_data: ShipmentCreate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_logistics)
 ):
-    """Create a new shipment (protected)"""
+    """Create a new shipment (SUPER_ADMIN or LOGISTICS)"""
     return create_shipment(session, shipment_data)
 
 
@@ -76,9 +76,9 @@ def update_existing_shipment(
     shipment_id: int,
     shipment_data: ShipmentUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_logistics)
 ):
-    """Update a shipment (protected)"""
+    """Update a shipment (SUPER_ADMIN or LOGISTICS)"""
     return update_shipment(session, shipment_id, shipment_data)
 
 
@@ -86,7 +86,7 @@ def update_existing_shipment(
 def delete_existing_shipment(
     shipment_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_logistics)
 ):
-    """Delete a shipment (protected)"""
+    """Delete a shipment (SUPER_ADMIN or LOGISTICS)"""
     return delete_shipment(session, shipment_id)

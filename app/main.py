@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.modules.auth.router import router as auth_router
+from app.modules.auth.admin_routes import router as admin_router
 from app.modules.catalog.router import router as catalog_router
 from app.modules.inventory.router import router as inventory_router
 from app.modules.sales.router import router as sales_router
@@ -13,6 +14,7 @@ app = FastAPI(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(catalog_router)
 app.include_router(inventory_router)
 app.include_router(sales_router)
@@ -28,6 +30,7 @@ def read_root():
         "docs": "/docs",
         "modules": [
             "Authentication (/api/auth)",
+            "Admin - User Management (/api/admin/users)",
             "Catalog (/api/catalog)",
             "Inventory (/api/inventory)",
             "Sales (/api/sales)",
