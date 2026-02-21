@@ -3,13 +3,19 @@ from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import settings
 from app.core.database import get_session
-from .models import User
-from .schema import RegisterRequest, CreateUser, UpdateUser
+from .models import User, UserInformation
+from .schema import (
+    RegisterRequest,
+    CreateUser,
+    UpdateUser,
+    UserInformationCreate,
+)
 
 # OAuth2 scheme - tokenUrl must match the login endpoint
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
@@ -18,15 +24,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 # Password utilities
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    password_bytes = plain_password.encode('utf-8')[:72]
-    return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
+    password_bytes = plain_password.encode("utf-8")[:72]
+    return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password (bcrypt max 72 bytes)"""
-    password_bytes = password.encode('utf-8')[:72]
+    password_bytes = password.encode("utf-8")[:72]
     hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
-    return hashed.decode('utf-8')
+    return hashed.decode("utf-8")
 
 
 # JWT token utilities
@@ -40,7 +46,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -67,8 +75,12 @@ def get_user_by_email(session: Session, email: str) -> Optional[User]:
 
 
 def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
-    """Get a user by ID"""
-    statement = select(User).where(User.id == user_id, User.is_deleted == False)
+    """Get a user by ID with user information"""
+    statement = (
+        select(User)
+        .where(User.id == user_id, User.is_deleted == False)
+        .options(selectinload(User.user_information))  # type: ignore[arg-type]
+    )
     return session.exec(statement).first()
 
 
@@ -78,8 +90,7 @@ def create_user(session: Session, user_data: RegisterRequest | CreateUser) -> Us
     existing_user = get_user_by_email(session, user_data.email)
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Hash the password
@@ -93,8 +104,8 @@ def create_user(session: Session, user_data: RegisterRequest | CreateUser) -> Us
         phone=user_data.phone,
         hashed_password=hashed_password,
         role_id=user_data.role_id,
-        branch_id=getattr(user_data, 'branch_id', None),
-        is_active=getattr(user_data, 'is_active', True),
+        branch_id=getattr(user_data, "branch_id", None),
+        is_active=getattr(user_data, "is_active", True),
     )
 
     session.add(user)
@@ -103,13 +114,31 @@ def create_user(session: Session, user_data: RegisterRequest | CreateUser) -> Us
     return user
 
 
+def create_user_information(
+    session: Session, user_id: int, user_data_information: UserInformationCreate
+) -> UserInformation:
+    """Create a new user information"""
+    userInformation = UserInformation(
+        user_id=user_id,
+        address=user_data_information.address,
+        city=user_data_information.city,
+        state=user_data_information.state,
+        postal_code=user_data_information.postal_code,
+        country=user_data_information.country,
+    )
+    session.add(userInformation)
+    session.commit()
+    session.refresh(userInformation)
+
+    return userInformation
+
+
 def update_user(session: Session, user_id: int, user_data: UpdateUser) -> User:
     """Update an existing user"""
     user = get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Update fields if provided
@@ -131,8 +160,7 @@ def update_user(session: Session, user_id: int, user_data: UpdateUser) -> User:
 
 # Dependency for getting current user
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    session: Session = Depends(get_session)
+    token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> User:
     """Get the current authenticated user from JWT token"""
     credentials_exception = HTTPException(
@@ -142,7 +170,9 @@ async def get_current_user(
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
@@ -155,20 +185,18 @@ async def get_current_user(
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
         )
 
     return user
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """Get current active user"""
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
         )
     return current_user

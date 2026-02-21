@@ -4,34 +4,38 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.core.database import get_session
-from .schema import LoginRequest, RegisterRequest, UpdateUser, UserResponse, TokenResponse
+from .schema import (
+    LoginRequest,
+    RegisterRequest,
+    UpdateUser,
+    UserResponse,
+    TokenResponse,
+)
 from .service import (
     authenticate_user,
     create_access_token,
     create_user,
     update_user,
     get_current_active_user,
+    create_user_information,
 )
 from .models import User
+from .schema import UserInformationCreate, UserInformationBase
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(
-    user_data: RegisterRequest,
-    session: Session = Depends(get_session)
-):
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
+def register(user_data: RegisterRequest, session: Session = Depends(get_session)):
     """Register a new user"""
     user = create_user(session, user_data)
     return user
 
 
 @router.post("/token", response_model=TokenResponse)
-def login(
-    login_data: LoginRequest,
-    session: Session = Depends(get_session)
-):
+def login(login_data: LoginRequest, session: Session = Depends(get_session)):
     """Login with email and password to get an access token"""
     user = authenticate_user(session, login_data.email, login_data.password)
     if not user:
@@ -43,21 +47,18 @@ def login(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
 
 
 @router.get("/profile", response_model=UserResponse)
-def get_profile(
-    current_user: User = Depends(get_current_active_user)
-):
+def get_profile(current_user: User = Depends(get_current_active_user)):
     """Get current authenticated user profile"""
     return current_user
 
@@ -66,9 +67,23 @@ def get_profile(
 def update_profile(
     user_data: UpdateUser,
     current_user: User = Depends(get_current_active_user),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
 ):
     """Update current authenticated user profile"""
     updated_user = update_user(session, current_user.id, user_data)
     return updated_user
 
+
+@router.post(
+    "/information",
+    response_model=UserInformationBase,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_information(
+    user_data: UserInformationCreate,
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    """Create current user information"""
+    user_information = create_user_information(session, current_user.id, user_data)
+    return user_information

@@ -6,12 +6,21 @@ Only SUPER_ADMIN can access these endpoints.
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_session
 from app.core.permissions import require_admin
 from app.modules.auth.models import User, Role
-from app.modules.auth.schema import CreateUser, UpdateUser, UserResponse
-from app.modules.auth.service import create_user, update_user, get_user_by_id
+from app.modules.auth.schema import (
+    CreateUser,
+    UpdateUser,
+    UserResponse,
+)
+from app.modules.auth.service import (
+    create_user,
+    update_user,
+    get_user_by_id,
+)
 
 router = APIRouter(prefix="/api/admin/users", tags=["Admin - User Management"])
 
@@ -19,14 +28,18 @@ router = APIRouter(prefix="/api/admin/users", tags=["Admin - User Management"])
 @router.get("", response_model=List[UserResponse])
 def list_all_users(
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Get all users in the system.
 
     **Required Role:** SUPER_ADMIN
     """
-    statement = select(User).where(User.is_deleted == False)
+    statement = (
+        select(User)
+        .where(User.is_deleted == False)
+        .options(selectinload(User.user_information)) # type: ignore[arg-type]
+    )
     users = session.exec(statement).all()
     return users
 
@@ -35,7 +48,7 @@ def list_all_users(
 def create_new_user(
     user_data: CreateUser,
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Create a new user (admin function).
@@ -52,7 +65,7 @@ def create_new_user(
 def get_user_by_id_admin(
     user_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Get any user by ID.
@@ -62,8 +75,7 @@ def get_user_by_id_admin(
     user = get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
 
@@ -73,7 +85,7 @@ def update_user_admin(
     user_id: int,
     user_data: UpdateUser,
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Update any user.
@@ -90,7 +102,7 @@ def update_user_admin(
 def delete_user_admin(
     user_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Soft delete a user.
@@ -100,15 +112,14 @@ def delete_user_admin(
     user = get_user_by_id(session, user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Prevent self-deletion
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete your own account"
+            detail="Cannot delete your own account",
         )
 
     # Soft delete
@@ -120,7 +131,7 @@ def delete_user_admin(
 @router.get("/roles", response_model=List[dict])
 def list_all_roles(
     session: Session = Depends(get_session),
-    current_user: User = Depends(require_admin)  # Only SUPER_ADMIN
+    current_user: User = Depends(require_admin),  # Only SUPER_ADMIN
 ):
     """
     Get all available roles.
@@ -131,10 +142,6 @@ def list_all_roles(
     roles = session.exec(statement).all()
 
     return [
-        {
-            "id": role.id,
-            "name": role.name.value,
-            "description": role.description
-        }
+        {"id": role.id, "name": role.name.value, "description": role.description}
         for role in roles
     ]
